@@ -1,0 +1,401 @@
+<%@ Page Language="C#" AutoEventWireup="true"
+    CodeBehind="Registration.aspx.cs"
+    Inherits="RegistrationForm.Registration" %>
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title>Registration Form</title>
+
+    <style>
+
+        body {
+            margin: 0;
+            font-family: Arial;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            width: 650px;
+            margin: 10px auto;
+        }
+
+        h3 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .label {
+            width: 130px;
+            font-size: 15px;
+        }
+
+        .input-control {
+            width: 390px;
+            height: 22px;
+        }
+
+        .dropdown {
+            width: 200px;
+            height: 28px;
+        }
+
+        .error {
+            color: darkred;
+            margin-left: 5px;
+            font-size: 14px;
+        }
+
+        .gender {
+            margin-right: 15px;
+        }
+
+        .btn {
+            margin-left: 180px;
+            padding: 5px 12px;
+            cursor: pointer;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <form id="form1" runat="server">
+
+        <div class="container">
+
+            <h3>REGISTRATION FORM</h3>
+
+            <!-- NAME -->
+            <div class="form-row">
+
+                <asp:Label ID="lblName" runat="server"
+                    Text="NAME"
+                    CssClass="label">
+                </asp:Label>
+
+                <asp:TextBox ID="txtName"
+                    runat="server"
+                    CssClass="input-control">
+                </asp:TextBox>
+
+                <asp:RequiredFieldValidator
+                    ID="rfvName"
+                    runat="server"
+                    ControlToValidate="txtName"
+                    ErrorMessage="Name is required"
+                    CssClass="error"
+                    Display="Dynamic">
+                </asp:RequiredFieldValidator>
+
+            </div>
+
+
+            <!-- ENROLLMENT -->
+            <div class="form-row">
+
+                <asp:Label ID="lblEnrollment"
+                    runat="server"
+                    Text="ENROLLMENT"
+                    CssClass="label">
+                </asp:Label>
+
+                <asp:TextBox ID="txtEnrollment"
+                    runat="server"
+                    CssClass="input-control">
+                </asp:TextBox>
+
+                <asp:RequiredFieldValidator
+                    ID="rfvEnrollment"
+                    runat="server"
+                    ControlToValidate="txtEnrollment"
+                    ErrorMessage="Enrollment is required"
+                    CssClass="error"
+                    Display="Dynamic">
+                </asp:RequiredFieldValidator>
+
+            </div>
+
+
+            <!-- DIVISION -->
+            <div class="form-row">
+
+                <asp:Label ID="lblDivision"
+                    runat="server"
+                    Text="DIVISION"
+                    CssClass="label">
+                </asp:Label>
+
+                <asp:DropDownList ID="ddlDivision"
+                    runat="server"
+                    CssClass="dropdown">
+
+                    <asp:ListItem Value="0">
+                        -- Select Division --
+                    </asp:ListItem>
+
+                    <asp:ListItem Value="A">
+                        Division A
+                    </asp:ListItem>
+
+                    <asp:ListItem Value="B">
+                        Division B
+                    </asp:ListItem>
+
+                    <asp:ListItem Value="C">
+                        Division C
+                    </asp:ListItem>
+
+                </asp:DropDownList>
+
+                <asp:RequiredFieldValidator
+                    ID="rfvDivision"
+                    runat="server"
+                    ControlToValidate="ddlDivision"
+                    InitialValue="0"
+                    ErrorMessage="Please select division"
+                    CssClass="error"
+                    Display="Dynamic">
+                </asp:RequiredFieldValidator>
+
+            </div>
+
+
+            <!-- BRANCH -->
+            <div class="form-row">
+
+                <asp:Label ID="lblBranch"
+                    runat="server"
+                    Text="BRANCH"
+                    CssClass="label">
+                </asp:Label>
+
+                <asp:DropDownList ID="ddlBranch"
+                    runat="server"
+                    CssClass="dropdown">
+
+                    <asp:ListItem Value="0">
+                        -- Select Branch --
+                    </asp:ListItem>
+
+                    <asp:ListItem Value="CSE">
+                        Computer Engineering
+                    </asp:ListItem>
+
+                    <asp:ListItem Value="IT">
+                        Information Technology
+                    </asp:ListItem>
+
+                    <asp:ListItem Value="ECE">
+                        Electronics Engineering
+                    </asp:ListItem>
+
+                    <asp:ListItem Value="ME">
+                        Mechanical Engineering
+                    </asp:ListItem>
+
+                </asp:DropDownList>
+
+                <asp:RequiredFieldValidator
+                    ID="rfvBranch"
+                    runat="server"
+                    ControlToValidate="ddlBranch"
+                    InitialValue="0"
+                    ErrorMessage="Please select branch"
+                    CssClass="error"
+                    Display="Dynamic">
+                </asp:RequiredFieldValidator>
+
+            </div>
+
+
+            <!-- GR NO -->
+            <div class="form-row">
+
+                <asp:Label ID="lblGRNo"
+                    runat="server"
+                    Text="GR NO"
+                    CssClass="label">
+                </asp:Label>
+
+                <asp:TextBox ID="txtGRNo"
+                    runat="server"
+                    CssClass="input-control">
+                </asp:TextBox>
+
+                <asp:RequiredFieldValidator
+                    ID="rfvGRNo"
+                    runat="server"
+                    ControlToValidate="txtGRNo"
+                    ErrorMessage="GR No is required"
+                    CssClass="error"
+                    Display="Dynamic">
+                </asp:RequiredFieldValidator>
+
+            </div>
+
+
+            <!-- GENDER -->
+            <div class="form-row">
+
+                <asp:Label ID="lblGender"
+                    runat="server"
+                    Text="GENDER"
+                    CssClass="label">
+                </asp:Label>
+
+                <asp:RadioButtonList ID="rblGender"
+                    runat="server"
+                    RepeatDirection="Horizontal">
+
+                    <asp:ListItem Value="Male" Selected="True">
+                        Male
+                    </asp:ListItem>
+
+                    <asp:ListItem Value="Female">
+                        FEMALE
+                    </asp:ListItem>
+
+                    <asp:ListItem Value="Other">
+                        OTHER
+                    </asp:ListItem>
+
+                </asp:RadioButtonList>
+
+            </div>
+
+
+            <!-- EMAIL -->
+            <div class="form-row">
+
+                <asp:Label ID="lblEmail"
+                    runat="server"
+                    Text="EMAIL"
+                    CssClass="label">
+                </asp:Label>
+
+                <asp:TextBox ID="txtEmail"
+                    runat="server"
+                    CssClass="input-control">
+                </asp:TextBox>
+
+                <asp:RequiredFieldValidator
+                    ID="rfvEmail"
+                    runat="server"
+                    ControlToValidate="txtEmail"
+                    ErrorMessage="Email is required"
+                    CssClass="error"
+                    Display="Dynamic">
+                </asp:RequiredFieldValidator>
+
+                <asp:RegularExpressionValidator
+                    ID="revEmail"
+                    runat="server"
+                    ControlToValidate="txtEmail"
+                    ValidationExpression="\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*"
+                    ErrorMessage="Invalid Email"
+                    CssClass="error"
+                    Display="Dynamic">
+                </asp:RegularExpressionValidator>
+
+            </div>
+
+
+            <!-- PHONE NUMBER -->
+            <div class="form-row">
+
+                <asp:Label ID="lblPhone"
+                    runat="server"
+                    Text="PHONE NUMBER"
+                    CssClass="label">
+                </asp:Label>
+
+                <asp:TextBox ID="txtPhone"
+                    runat="server"
+                    CssClass="input-control">
+                </asp:TextBox>
+
+                <asp:RequiredFieldValidator
+                    ID="rfvPhone"
+                    runat="server"
+                    ControlToValidate="txtPhone"
+                    ErrorMessage="Phone number is required"
+                    CssClass="error"
+                    Display="Dynamic">
+                </asp:RequiredFieldValidator>
+
+                <asp:RegularExpressionValidator
+                    ID="revPhone"
+                    runat="server"
+                    ControlToValidate="txtPhone"
+                    ValidationExpression="^[0-9]{10}$"
+                    ErrorMessage="Enter 10 digit number"
+                    CssClass="error"
+                    Display="Dynamic">
+                </asp:RegularExpressionValidator>
+
+            </div>
+
+
+            <!-- SUBMIT BUTTON -->
+            <div class="form-row">
+
+                <asp:Button ID="btnSubmit"
+                    runat="server"
+                    Text="Submit"
+                    CssClass="btn"
+                    OnClick="btnSubmit_Click" />
+
+            </div>
+
+
+            <asp:Label ID="lblMessage"
+                runat="server"
+                ForeColor="Green"
+                Font-Bold="true">
+            </asp:Label>
+
+        </div>
+
+    </form>
+
+</body>
+</html>
+
+using System;
+
+namespace RegistrationForm
+{
+    public partial class Registration : System.Web.UI.Page
+    {
+        protected void Page_Load(object sender, EventArgs e)
+        {
+        }
+
+        protected void btnSubmit_Click(object sender, EventArgs e)
+        {
+            if (Page.IsValid)
+            {
+                string name = txtName.Text;
+                string enrollment = txtEnrollment.Text;
+                string division = ddlDivision.SelectedValue;
+                string branch = ddlBranch.SelectedValue;
+                string grNo = txtGRNo.Text;
+                string gender = rblGender.SelectedValue;
+                string email = txtEmail.Text;
+                string phone = txtPhone.Text;
+
+                lblMessage.Text = "Registration Successful!";
+            }
+        }
+    }
+}
