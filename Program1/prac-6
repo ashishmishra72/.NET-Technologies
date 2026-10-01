@@ -1,0 +1,989 @@
+using System.ComponentModel.DataAnnotations;
+
+namespace ProductCatalog.Models
+{
+    public class Product
+    {
+        public int Id { get; set; }
+
+        [Required]
+        [StringLength(100)]
+        public string Name { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(50)]
+        public string Category { get; set; } = string.Empty;
+
+        [Required]
+        [Range(0.01, 99999999)]
+        public decimal Price { get; set; }
+
+        [StringLength(500)]
+        public string Description { get; set; } = string.Empty;
+    }
+}
+
+3. Database — Data/ApplicationDbContext.cs
+using Microsoft.EntityFrameworkCore;
+using ProductCatalog.Models;
+
+namespace ProductCatalog.Data
+{
+    public class ApplicationDbContext : DbContext
+    {
+        public ApplicationDbContext(
+            DbContextOptions<ApplicationDbContext> options)
+            : base(options)
+        {
+        }
+
+        public DbSet<Product> Products { get; set; }
+    }
+}
+
+4. Program.cs
+using Microsoft.EntityFrameworkCore;
+using ProductCatalog.Data;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// MVC
+builder.Services.AddControllersWithViews();
+
+// Database
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlite(
+        builder.Configuration.GetConnectionString("DefaultConnection")));
+
+var app = builder.Build();
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
+}
+
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+
+app.UseRouting();
+
+app.UseAuthorization();
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Products}/{action=Index}/{id?}");
+
+app.Run();
+
+5. appsettings.json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Data Source=productcatalog.db"
+  },
+
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+
+  "AllowedHosts": "*"
+}
+
+6. Controller — Controllers/ProductsController.cs
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using ProductCatalog.Data;
+using ProductCatalog.Models;
+
+namespace ProductCatalog.Controllers
+{
+    public class ProductsController : Controller
+    {
+        private readonly ApplicationDbContext _context;
+
+        public ProductsController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        // GET: Products
+        public async Task<IActionResult> Index()
+        {
+            var products = await _context.Products
+                .OrderByDescending(x => x.Id)
+                .ToListAsync();
+
+            return View(products);
+        }
+
+        // GET: Products/Details/5
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null)
+                return NotFound();
+
+            var product = await _context.Products
+                .FirstOrDefaultAsync(x => x.Id == id);
+
+            if (product == null)
+                return NotFound();
+
+            return View(product);
+        }
+
+        // GET: Products/Create
+        public IActionResult Create()
+        {
+            return View();
+        }
+
+        // POST: Products/Create
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(Product product)
+        {
+            if (!ModelState.IsValid)
+                return View(product);
+
+            _context.Products.Add(product);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        // GET: Products/Delete/5
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (id == null)
+                return NotFound();
+
+            var product = await _context.Products
+                .FirstOrDefaultAsync(x => x.Id == id);
+
+            if (product == null)
+                return NotFound();
+
+            return View(product);
+        }
+
+        // POST: Products/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var product = await _context.Products.FindAsync(id);
+
+            if (product != null)
+            {
+                _context.Products.Remove(product);
+                await _context.SaveChangesAsync();
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+    }
+}
+
+7. Layout — Views/Shared/_Layout.cshtml
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0" />
+
+    <title>@ViewData["Title"] - Product Catalog</title>
+
+    <link rel="stylesheet"
+          href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <link rel="stylesheet"
+          href="~/css/site.css" />
+</head>
+
+<body>
+
+<header>
+    <nav class="navbar navbar-expand-sm navbar-light bg-white border-bottom">
+        <div class="container-fluid">
+
+            <a class="navbar-brand"
+               asp-controller="Products"
+               asp-action="Index">
+                productcatlog
+            </a>
+
+            <div class="navbar-nav">
+                <a class="nav-link"
+                   asp-controller="Products"
+                   asp-action="Index">
+                    Home
+                </a>
+
+                <a class="nav-link" href="#">
+                    Privacy
+                </a>
+            </div>
+
+        </div>
+    </nav>
+</header>
+
+<main>
+    @RenderBody()
+</main>
+
+<footer class="footer">
+    <div class="container text-center">
+        &copy; 2026 - productcatlog -
+        <a href="#">Privacy</a>
+    </div>
+</footer>
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+@await RenderSectionAsync("Scripts", required: false)
+
+</body>
+</html>
+
+8. Product List — Views/Products/Index.cshtml
+This is the main page corresponding to your screenshot.
+
+@model IEnumerable<ProductCatalog.Models.Product>
+
+@{
+    ViewData["Title"] = "Product Catalog";
+}
+
+<div class="container product-container">
+
+    <!-- Header -->
+    <div class="catalog-header">
+
+        <div class="catalog-title">
+
+            <div class="shopping-icon">
+                🛍️
+            </div>
+
+            <div>
+                <h1>Product Catalog</h1>
+
+                <p>
+                    Explore our collection of quality products
+                </p>
+            </div>
+
+        </div>
+
+        <a asp-action="Create"
+           class="btn btn-light add-product">
+
+            <span>＋</span>
+            Add New Product
+
+        </a>
+
+    </div>
+
+
+    <!-- Product Count -->
+    <div class="product-count">
+
+        📦
+        <strong>@Model.Count()</strong>
+        Products Available
+
+    </div>
+
+
+    <!-- Products -->
+    <div class="row g-4">
+
+        @foreach (var product in Model)
+        {
+            <div class="col-md-4">
+
+                <div class="product-card">
+
+                    <!-- Image area -->
+                    <div class="product-image">
+
+                        <div class="cart-icon">
+                            🛒
+                        </div>
+
+                    </div>
+
+
+                    <!-- Product content -->
+                    <div class="product-content">
+
+                        <div class="product-heading">
+
+                            <h3>
+                                @product.Name
+                            </h3>
+
+                            <span class="category">
+                                @product.Category
+                            </span>
+
+                        </div>
+
+
+                        <div class="price">
+                            ₹ @product.Price.ToString("N2")
+                        </div>
+
+
+                        <p class="description">
+                            @product.Description
+                        </p>
+
+
+                        <hr />
+
+
+                        <div class="product-actions">
+
+                            <a asp-action="Details"
+                               asp-route-id="@product.Id"
+                               class="btn btn-details">
+
+                                👁 Details
+
+                            </a>
+
+                            <a asp-action="Delete"
+                               asp-route-id="@product.Id"
+                               class="btn btn-delete">
+
+                                🗑 Delete
+
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+        }
+
+    </div>
+
+</div>
+
+9. Create Product — Views/Products/Create.cshtml
+@model ProductCatalog.Models.Product
+
+@{
+    ViewData["Title"] = "Add New Product";
+}
+
+<div class="container form-container">
+
+    <div class="form-card">
+
+        <div class="form-header">
+            <h1>Add New Product</h1>
+            <p>Create a new product for your catalog.</p>
+        </div>
+
+        <form asp-action="Create" method="post">
+
+            <div asp-validation-summary="ModelOnly"
+                 class="text-danger">
+            </div>
+
+
+            <div class="mb-3">
+
+                <label asp-for="Name"
+                       class="form-label">
+                    Product Name
+                </label>
+
+                <input asp-for="Name"
+                       class="form-control"
+                       placeholder="Enter product name" />
+
+                <span asp-validation-for="Name"
+                      class="text-danger">
+                </span>
+
+            </div>
+
+
+            <div class="mb-3">
+
+                <label asp-for="Category"
+                       class="form-label">
+                    Category
+                </label>
+
+                <input asp-for="Category"
+                       class="form-control"
+                       placeholder="e.g. Electronics" />
+
+                <span asp-validation-for="Category"
+                      class="text-danger">
+                </span>
+
+            </div>
+
+
+            <div class="mb-3">
+
+                <label asp-for="Price"
+                       class="form-label">
+                    Price
+                </label>
+
+                <input asp-for="Price"
+                       class="form-control"
+                       type="number"
+                       step="0.01"
+                       placeholder="Enter price" />
+
+                <span asp-validation-for="Price"
+                      class="text-danger">
+                </span>
+
+            </div>
+
+
+            <div class="mb-3">
+
+                <label asp-for="Description"
+                       class="form-label">
+                    Description
+                </label>
+
+                <textarea asp-for="Description"
+                          class="form-control"
+                          rows="4"
+                          placeholder="Enter product description">
+                </textarea>
+
+                <span asp-validation-for="Description"
+                      class="text-danger">
+                </span>
+
+            </div>
+
+
+            <div class="form-buttons">
+
+                <a asp-action="Index"
+                   class="btn btn-secondary">
+                    Cancel
+                </a>
+
+                <button type="submit"
+                        class="btn btn-primary">
+                    Add Product
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync(
+            "_ValidationScriptsPartial");
+    }
+}
+
+10. Details — Views/Products/Details.cshtml
+@model ProductCatalog.Models.Product
+
+@{
+    ViewData["Title"] = "Product Details";
+}
+
+<div class="container form-container">
+
+    <div class="form-card">
+
+        <h1>@Model.Name</h1>
+
+        <span class="category">
+            @Model.Category
+        </span>
+
+        <h2 class="price mt-4">
+            ₹ @Model.Price.ToString("N2")
+        </h2>
+
+        <p class="description mt-3">
+            @Model.Description
+        </p>
+
+        <hr />
+
+        <a asp-action="Index"
+           class="btn btn-primary">
+            ← Back to Products
+        </a>
+
+    </div>
+
+</div>
+
+11. Delete — Views/Products/Delete.cshtml
+@model ProductCatalog.Models.Product
+
+@{
+    ViewData["Title"] = "Delete Product";
+}
+
+<div class="container form-container">
+
+    <div class="form-card">
+
+        <h1>Delete Product</h1>
+
+        <p>
+            Are you sure you want to delete this product?
+        </p>
+
+        <div class="delete-product">
+
+            <h3>@Model.Name</h3>
+
+            <p>
+                Category: @Model.Category
+            </p>
+
+            <strong>
+                ₹ @Model.Price.ToString("N2")
+            </strong>
+
+        </div>
+
+        <form asp-action="Delete" method="post">
+
+            <input type="hidden"
+                   asp-for="Id" />
+
+            <div class="form-buttons">
+
+                <a asp-action="Index"
+                   class="btn btn-secondary">
+                    Cancel
+                </a>
+
+                <button type="submit"
+                        class="btn btn-delete">
+                    🗑 Delete
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+12. CSS — wwwroot/css/site.css
+This gives the page the appearance shown in your screenshot.
+
+html {
+    font-size: 14px;
+}
+
+body {
+    margin: 0;
+    background: #f5f6fb;
+    color: #222;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+
+/* NAVBAR */
+
+.navbar {
+    height: 60px;
+}
+
+.navbar-brand {
+    font-size: 18px;
+    font-weight: 500;
+}
+
+
+/* MAIN CONTAINER */
+
+.product-container {
+    max-width: 1100px;
+    margin: 20px auto 100px;
+}
+
+
+/* HEADER */
+
+.catalog-header {
+    min-height: 137px;
+
+    padding: 28px 34px;
+
+    border-radius: 12px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    background: linear-gradient(
+        110deg,
+        #1769f5,
+        #5221f2
+    );
+
+    color: white;
+
+    box-shadow: 0 8px 20px rgba(0,0,0,.15);
+}
+
+
+.catalog-title {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+
+.catalog-title h1 {
+    margin: 0;
+
+    font-size: 32px;
+    font-weight: 700;
+}
+
+
+.catalog-title p {
+    margin: 8px 0 0;
+
+    font-size: 14px;
+
+    color: #e7eaff;
+}
+
+
+.shopping-icon {
+    font-size: 38px;
+}
+
+
+.add-product {
+    color: #2671dc;
+
+    font-weight: 600;
+
+    padding: 10px 20px;
+
+    border-radius: 7px;
+
+    border: none;
+}
+
+
+/* PRODUCT COUNT */
+
+.product-count {
+    display: inline-block;
+
+    margin: 25px 0 20px;
+
+    padding: 12px 18px;
+
+    background: white;
+
+    border-radius: 8px;
+
+    box-shadow: 0 3px 12px rgba(0,0,0,.08);
+}
+
+
+/* PRODUCT CARD */
+
+.product-card {
+    background: white;
+
+    border-radius: 14px;
+
+    overflow: hidden;
+
+    box-shadow: 0 5px 18px rgba(0,0,0,.08);
+
+    transition: .2s;
+}
+
+
+.product-card:hover {
+    transform: translateY(-3px);
+
+    box-shadow: 0 8px 25px rgba(0,0,0,.13);
+}
+
+
+/* IMAGE */
+
+.product-image {
+    height: 102px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: linear-gradient(
+        120deg,
+        #edf3ff,
+        #f0eaff
+    );
+}
+
+
+.cart-icon {
+    font-size: 42px;
+}
+
+
+/* CONTENT */
+
+.product-content {
+    padding: 22px 20px 20px;
+}
+
+
+.product-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+
+.product-heading h3 {
+    margin: 0;
+
+    font-size: 18px;
+    font-weight: 700;
+}
+
+
+.category {
+    background: #eaf3ff;
+
+    color: #2875d5;
+
+    padding: 6px 11px;
+
+    border-radius: 15px;
+
+    font-size: 12px;
+
+    white-space: nowrap;
+}
+
+
+.price {
+    color: #087c4b;
+
+    font-size: 20px;
+
+    font-weight: 700;
+
+    margin-top: 10px;
+}
+
+
+.description {
+    color: #777;
+
+    margin-top: 10px;
+
+    min-height: 23px;
+}
+
+
+.product-content hr {
+    margin-top: 28px;
+
+    border: 0;
+
+    border-top: 1px solid #ddd;
+}
+
+
+/* BUTTONS */
+
+.product-actions {
+    display: flex;
+
+    justify-content: space-between;
+
+    margin-top: 14px;
+}
+
+
+.btn {
+    border-radius: 6px;
+
+    font-weight: 500;
+}
+
+
+.btn-details {
+    background: #0969e8;
+
+    color: white;
+}
+
+
+.btn-details:hover {
+    background: #0759c9;
+
+    color: white;
+}
+
+
+.btn-delete {
+    background: #dc3545;
+
+    color: white;
+}
+
+
+.btn-delete:hover {
+    background: #bb2534;
+
+    color: white;
+}
+
+
+/* FORM */
+
+.form-container {
+    max-width: 750px;
+
+    margin: 40px auto;
+}
+
+
+.form-card {
+    background: white;
+
+    padding: 35px;
+
+    border-radius: 12px;
+
+    box-shadow: 0 5px 20px rgba(0,0,0,.08);
+}
+
+
+.form-card h1 {
+    margin-bottom: 8px;
+}
+
+
+.form-header {
+    margin-bottom: 30px;
+}
+
+
+.form-header p {
+    color: #777;
+}
+
+
+.form-control {
+    min-height: 45px;
+
+    border-radius: 6px;
+}
+
+
+.form-buttons {
+    display: flex;
+
+    justify-content: flex-end;
+
+    gap: 10px;
+
+    margin-top: 25px;
+}
+
+
+.delete-product {
+    background: #fff5f5;
+
+    border: 1px solid #ffd0d0;
+
+    padding: 20px;
+
+    border-radius: 8px;
+
+    margin-top: 20px;
+}
+
+
+/* FOOTER */
+
+.footer {
+    position: fixed;
+
+    bottom: 0;
+
+    width: 100%;
+
+    background: #f8f9fa;
+
+    border-top: 1px solid #ddd;
+
+    padding: 14px 0;
+
+    color: #777;
+}
+
+
+/* MOBILE */
+
+@media (max-width: 768px) {
+
+    .product-container {
+        padding: 0 15px;
+    }
+
+    .catalog-header {
+        flex-direction: column;
+
+        align-items: flex-start;
+
+        gap: 20px;
+    }
+
+    .catalog-title h1 {
+        font-size: 25px;
+    }
+
+    .add-product {
+        align-self: stretch;
+    }
+
+}
