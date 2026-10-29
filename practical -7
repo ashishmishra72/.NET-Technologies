@@ -1,0 +1,427 @@
+
+/*
+PROJECT: FEEDBACK MANAGEMENT SYSTEM
+TECHNOLOGY: ASP.NET CORE MVC + C# + SQL SERVER
+
+INSTALL NUGET PACKAGES:
+Microsoft.EntityFrameworkCore.SqlServer
+Microsoft.EntityFrameworkCore.Tools
+
+RUN MIGRATIONS:
+Add-Migration InitialCreate
+Update-Database
+*/
+
+// =====================================================
+// FILE 1: Models/Feedback.cs
+// =====================================================
+
+using System.ComponentModel.DataAnnotations;
+
+namespace FeedbackManagement.Models
+{
+    public class Feedback
+    {
+        public int Id { get; set; }
+
+        [Required]
+        [StringLength(100)]
+        public string Name { get; set; } = string.Empty;
+
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        [Range(1, 5)]
+        public int Rating { get; set; } = 5;
+
+        [Required]
+        [StringLength(1000)]
+        public string Comments { get; set; } = string.Empty;
+    }
+}
+
+
+// =====================================================
+// FILE 2: Data/ApplicationDbContext.cs
+// =====================================================
+
+using FeedbackManagement.Models;
+using Microsoft.EntityFrameworkCore;
+
+namespace FeedbackManagement.Data
+{
+    public class ApplicationDbContext : DbContext
+    {
+        public ApplicationDbContext(
+            DbContextOptions<ApplicationDbContext> options)
+            : base(options)
+        {
+        }
+
+        public DbSet<Feedback> Feedbacks { get; set; }
+    }
+}
+
+
+// =====================================================
+// FILE 3: appsettings.json
+// NOTE: JSON is a separate file.
+// =====================================================
+
+/*
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=FeedbackManagementDB;Trusted_Connection=True;TrustServerCertificate=True"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*"
+}
+*/
+
+
+// =====================================================
+// FILE 4: Program.cs
+// =====================================================
+
+using FeedbackManagement.Data;
+using Microsoft.EntityFrameworkCore;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllersWithViews();
+
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection")));
+
+var app = builder.Build();
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
+}
+
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+app.UseRouting();
+app.UseAuthorization();
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Feedback}/{action=Index}/{id?}");
+
+app.Run();
+
+
+// =====================================================
+// FILE 5: Controllers/FeedbackController.cs
+// =====================================================
+
+using FeedbackManagement.Data;
+using FeedbackManagement.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
+namespace FeedbackManagement.Controllers
+{
+    public class FeedbackController : Controller
+    {
+        private readonly ApplicationDbContext _context;
+
+        public FeedbackController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        // DISPLAY FEEDBACK LIST
+        public async Task<IActionResult> Index()
+        {
+            var feedbacks = await _context.Feedbacks
+                .AsNoTracking()
+                .OrderByDescending(f => f.Id)
+                .ToListAsync();
+
+            return View(feedbacks);
+        }
+
+        // OPEN FEEDBACK FORM
+        [HttpGet]
+        public IActionResult Create()
+        {
+            return View(new Feedback());
+        }
+
+        // SAVE FEEDBACK
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(Feedback feedback)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(feedback);
+            }
+
+            _context.Feedbacks.Add(feedback);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Feedback submitted successfully!";
+
+            return RedirectToAction(nameof(Index));
+        }
+    }
+}
+
+
+// =====================================================
+// FILE 6: Views/Feedback/Index.cshtml
+// =====================================================
+
+/*
+@model IEnumerable<FeedbackManagement.Models.Feedback>
+
+@{
+    ViewData["Title"] = "Feedback List";
+}
+
+<div class="container feedback-container">
+    <h2>Feedback List</h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["Success"]
+        </div>
+    }
+
+    <p>
+        <a asp-action="Create" class="btn btn-success">
+            Add Feedback
+        </a>
+    </p>
+
+    @if (!Model.Any())
+    {
+        <p>No feedback available.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Rating</th>
+                        <th>Comments</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.Name</td>
+                            <td>@item.Email</td>
+                            <td>@item.Rating / 5</td>
+                            <td>@item.Comments</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+*/
+
+
+// =====================================================
+// FILE 7: Views/Feedback/Create.cshtml
+// =====================================================
+
+/*
+@model FeedbackManagement.Models.Feedback
+
+@{
+    ViewData["Title"] = "Give Feedback";
+}
+
+<div class="container feedback-container">
+    <h2>Give Feedback</h2>
+
+    <form asp-action="Create" method="post">
+
+        <div asp-validation-summary="ModelOnly"
+             class="text-danger"></div>
+
+        <div class="mb-3">
+            <label asp-for="Name" class="form-label">
+                Name
+            </label>
+            <input asp-for="Name" class="form-control"
+                   placeholder="Enter your name" />
+            <span asp-validation-for="Name"
+                  class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Email" class="form-label">
+                Email
+            </label>
+            <input asp-for="Email" class="form-control"
+                   placeholder="Enter your email" />
+            <span asp-validation-for="Email"
+                  class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Rating" class="form-label">
+                Rating
+            </label>
+            <select asp-for="Rating" class="form-select">
+                <option value="5">5</option>
+                <option value="4">4</option>
+                <option value="3">3</option>
+                <option value="2">2</option>
+                <option value="1">1</option>
+            </select>
+            <span asp-validation-for="Rating"
+                  class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Comments" class="form-label">
+                Comments
+            </label>
+            <textarea asp-for="Comments"
+                      class="form-control"
+                      rows="4"
+                      placeholder="Enter your comments"></textarea>
+            <span asp-validation-for="Comments"
+                  class="text-danger"></span>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            Submit Feedback
+        </button>
+
+        <a asp-action="Index" class="btn btn-secondary">
+            View Feedback
+        </a>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+*/
+
+
+// =====================================================
+// FILE 8: Views/Shared/_Layout.cshtml
+// =====================================================
+
+/*
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0" />
+
+    <title>@ViewData["Title"] - Feedback Management</title>
+
+    <link rel="stylesheet"
+          href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <style>
+        body {
+            margin: 0;
+            background: white;
+            font-family: Arial, sans-serif;
+            color: #212529;
+        }
+
+        .navbar-custom {
+            background: #0d6efd;
+            padding: 12px 15px;
+            min-height: 48px;
+        }
+
+        .navbar-custom a {
+            color: white;
+            text-decoration: none;
+        }
+
+        .navbar-brand-custom {
+            font-size: 18px;
+        }
+
+        .feedback-container {
+            max-width: 1140px;
+            margin: 24px auto 45px;
+            min-height: 115px;
+        }
+
+        .feedback-container h2 {
+            font-size: 28px;
+            margin-bottom: 6px;
+        }
+
+        .footer {
+            background: #f8f9fa;
+            text-align: center;
+            padding: 16px;
+            margin-top: 25px;
+        }
+
+        .table {
+            margin-top: 12px;
+        }
+
+        .text-danger {
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar-custom d-flex
+                    justify-content-between align-items-center">
+            <a asp-controller="Feedback"
+               asp-action="Index"
+               class="navbar-brand-custom">
+                Feedback Management
+            </a>
+
+            <a asp-controller="Feedback"
+               asp-action="Create">
+                Give Feedback
+            </a>
+        </nav>
+    </header>
+
+    <main>
+        @RenderBody()
+    </main>
+
+    <footer class="footer">
+        Feedback Management System
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
+*/
+*/
+
